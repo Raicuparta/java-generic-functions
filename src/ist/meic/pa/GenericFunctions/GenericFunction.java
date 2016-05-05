@@ -25,6 +25,8 @@ public class GenericFunction {
 		replace(afters, method);
 	}
 	
+	// checks if method with same argument types already exists
+	// replaces if true, adds otherwise
 	public void replace(ArrayList<GFMethod> list, GFMethod method) {
 		Class<?>[] newTypes = getCall(method).getParameterTypes();
 		
@@ -110,20 +112,23 @@ public class GenericFunction {
 	}
 
 	public Object call(Object... args) throws Throwable {
-
+		callBefores(args);
+		Object ret = callPrimary(args);
+		callAfters(args);
+		return ret;
+	}
+	
+	public Object callPrimary(Object... args) throws Throwable {
 		ArrayList<GFMethod> applicables = getApplicableMethods(primaries, args);
 		ArrayList<GFMethod> sorted = sort(applicables, true);
 		GFMethod primary = sorted.get(0);
 		Method primaryCall = getCall(primary);
-
-		callBefores(args);
 		if (primary != null) {
 			Object ret = primaryCall.invoke(primary, args);
 			callAfters(args);
 			return ret;
 		}
-		callAfters(args);
-		return null; // TODO cleanup
+		return null;
 	}
 
 	void callBefores(Object... args) throws Throwable {

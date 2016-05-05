@@ -57,7 +57,7 @@ public class Main {
 		
 		explain.addMethod(new GFMethod() {
 			void call(Object entity, Float pois) {
-				System.out.printf("The float %s", pois);
+				System.out.printf("The float popo %s", pois);
 			}
 		});
 		
