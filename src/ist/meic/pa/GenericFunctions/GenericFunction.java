@@ -14,11 +14,37 @@ public class GenericFunction {
 	}
 
 	public void addMethod(GFMethod method) {
-		primaries.add(method);
+		replace(primaries, method);
 	}
 
-	public void addBeforeMethod(GFMethod newGfm) {
-		befores.add(newGfm);
+	public void addBeforeMethod(GFMethod method) {
+		replace(befores, method);
+	}
+	
+	public void addAfterMethod(GFMethod method) {
+		replace(afters, method);
+	}
+	
+	public void replace(ArrayList<GFMethod> list, GFMethod method) {
+		Class<?>[] newTypes = getCall(method).getParameterTypes();
+		
+		for (int e = 0; e < list.size(); e++) {
+			GFMethod gfm = list.get(e);
+			boolean exists = true;
+			for (int i = 0; i < newTypes.length; i++) {
+				Class<?> type = getCall(gfm).getParameterTypes()[i];
+				Class<?> newType = newTypes[i];
+				if (type != newType) {
+					exists = false;
+					break;
+				}
+			}
+			if (exists) {
+				list.set(e, method);
+				return;
+			}
+		}
+		list.add(method);
 	}
 
 	public ArrayList<GFMethod> sort(ArrayList<GFMethod> applicables, boolean specificFirst) {
@@ -81,10 +107,6 @@ public class GenericFunction {
 				applicables.add(gfm);
 		}
 		return applicables;
-	}
-
-	public void addAfterMethod(GFMethod method) {
-		afters.add(method);
 	}
 
 	public Object call(Object... args) throws Throwable {
