@@ -1,6 +1,7 @@
 package ist.meic.pa.GenericFunctions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.lang.reflect.*;
 
 public class GenericFunction {
@@ -108,6 +109,9 @@ public class GenericFunction {
 			if (applicable)
 				applicables.add(gfm);
 		}
+		
+		
+		
 		return applicables;
 	}
 
@@ -120,6 +124,9 @@ public class GenericFunction {
 	
 	public Object callPrimary(Object... args) throws Throwable {
 		ArrayList<GFMethod> applicables = getApplicableMethods(primaries, args);
+		if(applicables.isEmpty()) 
+				throw new IllegalArgumentException("No methods for generic function " + name + " with args " + printArgs(args)
+						+ " of classes " + printArgTypes(args));
 		ArrayList<GFMethod> sorted = sort(applicables, true);
 		GFMethod primary = sorted.get(0);
 		Method primaryCall = getCall(primary);
@@ -129,6 +136,39 @@ public class GenericFunction {
 			return ret;
 		}
 		return null;
+	}
+
+	private String printArgs(Object[] args) {
+		String result = "";
+		for(Object arg : args){
+			result += printcenas(arg);
+		}
+		return result;
+	}
+	
+	public static String printcenas(Object obj) {
+		String result = "";
+		if (obj instanceof Object[]) {
+			result += Arrays.deepToString((Object[]) obj);
+		} else {
+			result += obj +" ";
+		}
+		return result;
+	}
+
+	private String printArgTypes(Object[] args) {
+		String result = "";
+		for(int i = 0; i < args.length; i++){
+			System.out.println("merda");
+			if(i==args.length-1){
+				result += args[i].getClass().getName();
+				
+			}
+			else
+				result += args[i].getClass().getName() + ";, ";
+		}
+		result += "\n";
+		return result;
 	}
 
 	void callBefores(Object... args) throws Throwable {

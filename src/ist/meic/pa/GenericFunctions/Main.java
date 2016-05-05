@@ -63,7 +63,7 @@ public class Main {
 		
 		println(explain.call(123, 456));
 		println(explain.call(741, 3.1415));
-		println(explain.call(3, 3));
+		println(explain.call(3, "asd"));
 		
 		Class c1 = "pilinha".getClass();
 		Class c2 = "7456456".getClass();
