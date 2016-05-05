@@ -32,13 +32,22 @@ public class GenericFunction {
 				break;
 			}
 			boolean added = false;
-			for (int i = 0; i < sorted.size(); i++) {
+			int i = -1;
+			while (true) {
+				i++;
 				GFMethod sortedGfm = sorted.get(i);
 
-				Class<?> sortedType = getCall(sortedGfm).getClass();
-				Class<?> listType = getCall(listGfm).getClass();
+				Class[] sortedArgs = getCall(sortedGfm).getParameterTypes();
+				Class[] listArgs = getCall(listGfm).getParameterTypes();
 
-				boolean sortCondition = listType.isAssignableFrom(sortedType);
+				boolean sortCondition = true;
+				for (int e = 0; e < sortedArgs.length; e++) {
+					Class<?> sortedType = sortedArgs[e];
+					Class<?> listType = listArgs[e];
+					if (!listType.isAssignableFrom(sortedType))
+						sortCondition = false;
+				}
+
 				if (specificFirst)
 					sortCondition = !sortCondition;
 
@@ -74,7 +83,8 @@ public class GenericFunction {
 					break;
 				}
 			}
-			if (applicable) applicables.add(gfm);
+			if (applicable)
+				applicables.add(gfm);
 		}
 		return applicables;
 	}
@@ -85,39 +95,10 @@ public class GenericFunction {
 
 	public Object call(Object... args) throws Throwable {
 
-		GFMethod primary = null;
-		Method primaryCall = null;
-		
 		ArrayList<GFMethod> applicables = getApplicableMethods(primaries, args);
-		for (GFMethod gfm : applicables) {
-			Method call = getCall(gfm);
-			if (call == null)
-				continue;
-
-			for (int i = 0; i < args.length; i++) {
-				Class<?> genericType = args[i].getClass();
-				Class<?> specificType = call.getParameterTypes()[i];
-
-				// check if applicable
-				if (!(specificType.isAssignableFrom(genericType)))
-					break;
-
-				if (primary == null) {
-					primary = gfm;
-					primaryCall = getCall(primary);
-					continue;
-				}
-
-				// TODO melhorar
-				primaryCall = getCall(primary);
-
-				Class<?> previousType = primaryCall.getClass();
-
-				if (previousType.isAssignableFrom(specificType)) {
-					primary = gfm;
-				}
-			}
-		}
+		ArrayList<GFMethod> sorted = sort(applicables, true);
+		GFMethod primary = sorted.get(0);
+		Method primaryCall = getCall(primary);
 
 		callBefores(args);
 		if (primary != null) {
@@ -126,7 +107,7 @@ public class GenericFunction {
 			return ret;
 		}
 		callAfters(args);
-		return null; //TODO cleanup
+		return null; // TODO cleanup
 	}
 
 	void callBefores(Object... args) throws Throwable {
@@ -165,58 +146,38 @@ public class GenericFunction {
 	}
 
 	public static void main(String[] args) throws Throwable {
-		final GenericFunction add = new GenericFunction("add");
-		add.addMethod(new GFMethod() {
-			Object call(Integer a, Integer b) {
-				return a + b;
+		final GenericFunction explain = new GenericFunction("explain");
+		explain.addMethod(new GFMethod() {
+			Object call(Integer entity) {
+				System.out.printf("%s is a integer", entity);
+				return "";
 			}
 		});
-		add.addMethod(new GFMethod() {
-			Object call(Object[] a, Object[] b) throws Throwable {
-				Object[] r = new Object[a.length];
-				for (int i = 0; i < a.length; i++) {
-					r[i] = add.call(a[i], b[i]);
-				}
-				return r;
+		explain.addMethod(new GFMethod() {
+			Object call(Number entity) {
+				System.out.printf("%s is a number", entity);
+				return "";
 			}
 		});
-
-		add.addMethod(new GFMethod() {
-			Object call(Object[] a, Object b) throws Throwable {
-				Object[] ba = new Object[a.length];
-				Arrays.fill(ba, b);
-				return add.call(a, ba);
+		explain.addMethod(new GFMethod() {
+			Object call(String entity) {
+				System.out.printf("%s is a string", entity);
+				return "";
 			}
 		});
-		add.addMethod(new GFMethod() {
-			Object call(Object a, Object b[]) throws Throwable {
-				Object[] aa = new Object[b.length];
-				Arrays.fill(aa, a);
-				return add.call(aa, b);
+		explain.addAfterMethod(new GFMethod() {
+			void call(Integer entity) {
+				System.out.printf(" (in hexadecimal, is %x)", entity);
 			}
 		});
-		add.addMethod(new GFMethod() {
-			Object call(String a, Object b) throws NumberFormatException, Throwable {
-				return add.call(Integer.decode(a), b);
+		explain.addBeforeMethod(new GFMethod() {
+			void call(Number entity) {
+				System.out.printf("The number ", entity);
 			}
 		});
-		add.addMethod(new GFMethod() {
-			Object call(Object a, String b) throws NumberFormatException, Throwable {
-				return add.call(a, Integer.decode(b));
-			}
-		});
-		add.addMethod(new GFMethod() {
-			Object call(Object[] a, List b) throws Throwable {
-				return add.call(a, b.toArray());
-			}
-		});
-
-		println(add.call(new Object[] { 1, 2 }, 3));
-		println(add.call(1, new Object[][] { { 1, 2 }, { 3, 4 } }));
-		println(add.call("12", "34"));
-		println(add.call(new Object[] { "123", "4" }, 5));
-		println(add.call(new Object[] { 1, 2, 3 }, Arrays.asList(4, 5, 6)));
-
+		println(explain.call(123));
+		println(explain.call("Hi"));
+		println(explain.call(3.14159));
 
 	}
 }
