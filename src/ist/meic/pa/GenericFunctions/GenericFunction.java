@@ -29,12 +29,10 @@ public class GenericFunction {
 		for (GFMethod listGfm : list) {
 			if (sorted.isEmpty()) {
 				sorted.add(listGfm);
-				break;
+				continue;
 			}
 			boolean added = false;
-			int i = -1;
-			while (true) {
-				i++;
+			for (int i = 0; i < sorted.size(); i++) {
 				GFMethod sortedGfm = sorted.get(i);
 
 				Class[] sortedArgs = getCall(sortedGfm).getParameterTypes();
@@ -61,6 +59,14 @@ public class GenericFunction {
 				sorted.add(listGfm);
 		}
 
+		for (GFMethod gfm: sorted) {
+			Class[] sortedArgs = getCall(gfm).getParameterTypes();
+			for (Class c : sortedArgs) {
+				System.out.print(c + " ");
+			}
+			System.out.println("");
+		}
+		
 		return sorted;
 	}
 
@@ -146,38 +152,63 @@ public class GenericFunction {
 	}
 
 	public static void main(String[] args) throws Throwable {
-		final GenericFunction explain = new GenericFunction("explain");
-		explain.addMethod(new GFMethod() {
-			Object call(Integer entity) {
-				System.out.printf("%s is a integer", entity);
-				return "";
+		final GenericFunction add = new GenericFunction("add");
+		add.addMethod(new GFMethod() {
+			Object call(Integer a, Integer b) {
+				System.out.println("integer integer");
+				return a + b;
 			}
 		});
-		explain.addMethod(new GFMethod() {
-			Object call(Number entity) {
-				System.out.printf("%s is a number", entity);
-				return "";
+		add.addMethod(new GFMethod() {
+			Object call(Object[] a, List b) throws Throwable {
+				System.out.println("array list");
+				return add.call(a, b.toArray());
 			}
 		});
-		explain.addMethod(new GFMethod() {
-			Object call(String entity) {
-				System.out.printf("%s is a string", entity);
-				return "";
+		add.addMethod(new GFMethod() {
+			Object call(Object[] a, Object[] b) throws Throwable {
+				System.out.println("array array");
+				Object[] r = new Object[a.length];
+				for (int i = 0; i < a.length; i++) {
+					r[i] = add.call(a[i], b[i]);
+				}
+				return r;
 			}
 		});
-		explain.addAfterMethod(new GFMethod() {
-			void call(Integer entity) {
-				System.out.printf(" (in hexadecimal, is %x)", entity);
+		
+
+		add.addMethod(new GFMethod() {
+			Object call(Object[] a, Object b) throws Throwable {
+				System.out.println("array object");
+				Object[] ba = new Object[a.length];
+				Arrays.fill(ba, b);
+				return add.call(a, ba);
 			}
 		});
-		explain.addBeforeMethod(new GFMethod() {
-			void call(Number entity) {
-				System.out.printf("The number ", entity);
+		add.addMethod(new GFMethod() {
+			Object call(Object a, Object b[]) throws Throwable {
+				System.out.println("object array");
+				Object[] aa = new Object[b.length];
+				Arrays.fill(aa, a);
+				return add.call(aa, b);
 			}
 		});
-		println(explain.call(123));
-		println(explain.call("Hi"));
-		println(explain.call(3.14159));
+		add.addMethod(new GFMethod() {
+			Object call(String a, Object b) throws NumberFormatException, Throwable {
+				return add.call(Integer.decode(a), b);
+			}
+		});
+		add.addMethod(new GFMethod() {
+			Object call(Object a, String b) throws NumberFormatException, Throwable {
+				return add.call(a, Integer.decode(b));
+			}
+		});
+
+		println(add.call(new Object[] { 1, 2 }, 3));
+		println(add.call(1, new Object[][] { { 1, 2 }, { 3, 4 } }));
+		println(add.call("12", "34"));
+		println(add.call(new Object[] { "123", "4" }, 5));
+		println(add.call(new Object[] { 1, 2, 3 }, Arrays.asList(4, 5, 6)));
 
 	}
 }
