@@ -138,19 +138,20 @@ public class GenericFunction {
 	}
 
 	private String printArgs(Object[] args) {
-		String result = "";
+		String result = "[";
 		for (Object arg : args) {
-			result += printcenas(arg);
+			result += printObj(arg);
+			if (arg != args[args.length - 1]) result += " ";
 		}
-		return result;
+		return result + "]";
 	}
 
-	public static String printcenas(Object obj) {
+	public static String printObj(Object obj) {
 		String result = "";
 		if (obj instanceof Object[]) {
 			result += Arrays.deepToString((Object[]) obj);
 		} else {
-			result += obj + " ";
+			result += obj;
 		}
 		return result;
 	}
