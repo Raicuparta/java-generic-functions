@@ -157,15 +157,16 @@ public class GenericFunction {
 	}
 
 	private String printArgTypes(Object[] args) {
-		String result = "";
+		String result = "[";
 		for (int i = 0; i < args.length; i++) {
+			result += "class ";
 			if (i == args.length - 1) {
 				result += args[i].getClass().getName();
 
 			} else
-				result += args[i].getClass().getName() + ";, ";
+				result += args[i].getClass().getName() + ", ";
 		}
-		result += "\n";
+		result += "]\n";
 		return result;
 	}
 
