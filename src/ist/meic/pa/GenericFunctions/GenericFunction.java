@@ -21,16 +21,16 @@ public class GenericFunction {
 	public void addBeforeMethod(GFMethod method) {
 		replace(befores, method);
 	}
-	
+
 	public void addAfterMethod(GFMethod method) {
 		replace(afters, method);
 	}
-	
+
 	// checks if method with same argument types already exists
 	// replaces if true, adds otherwise
 	public void replace(ArrayList<GFMethod> list, GFMethod method) {
 		Class<?>[] newTypes = getCall(method).getParameterTypes();
-		
+
 		for (int e = 0; e < list.size(); e++) {
 			GFMethod gfm = list.get(e);
 			boolean exists = true;
@@ -57,7 +57,7 @@ public class GenericFunction {
 				sorted.add(appGfm);
 				continue;
 			}
-			
+
 			boolean added = false;
 			for (int i = 0; i < sorted.size(); i++) {
 				GFMethod sortedGfm = sorted.get(i);
@@ -109,29 +109,28 @@ public class GenericFunction {
 			if (applicable)
 				applicables.add(gfm);
 		}
-		
-		
-		
+
 		return applicables;
 	}
 
-	public Object call(Object... args) throws Throwable {
+	public Object call(Object... args) {
 		callBefores(args);
 		Object ret = callPrimary(args);
 		callAfters(args);
 		return ret;
 	}
-	
-	public Object callPrimary(Object... args) throws Throwable {
+
+	public Object callPrimary(Object... args) {
 		ArrayList<GFMethod> applicables = getApplicableMethods(primaries, args);
-		if(applicables.isEmpty()) 
-				throw new IllegalArgumentException("No methods for generic function " + name + " with args " + printArgs(args)
-						+ " of classes " + printArgTypes(args));
+		if (applicables.isEmpty())
+			throw new IllegalArgumentException("No methods for generic function " + name + " with args "
+					+ printArgs(args) + " of classes " + printArgTypes(args));
 		ArrayList<GFMethod> sorted = sort(applicables, true);
 		GFMethod primary = sorted.get(0);
 		Method primaryCall = getCall(primary);
 		if (primary != null) {
-			Object ret = primaryCall.invoke(primary, args);
+			Object ret = null;
+			ret = callMethod(primaryCall, primary, args);
 			callAfters(args);
 			return ret;
 		}
@@ -140,53 +139,63 @@ public class GenericFunction {
 
 	private String printArgs(Object[] args) {
 		String result = "";
-		for(Object arg : args){
+		for (Object arg : args) {
 			result += printcenas(arg);
 		}
 		return result;
 	}
-	
+
 	public static String printcenas(Object obj) {
 		String result = "";
 		if (obj instanceof Object[]) {
 			result += Arrays.deepToString((Object[]) obj);
 		} else {
-			result += obj +" ";
+			result += obj + " ";
 		}
 		return result;
 	}
 
 	private String printArgTypes(Object[] args) {
 		String result = "";
-		for(int i = 0; i < args.length; i++){
-			System.out.println("merda");
-			if(i==args.length-1){
+		for (int i = 0; i < args.length; i++) {
+			if (i == args.length - 1) {
 				result += args[i].getClass().getName();
-				
-			}
-			else
+
+			} else
 				result += args[i].getClass().getName() + ";, ";
 		}
 		result += "\n";
 		return result;
 	}
 
-	void callBefores(Object... args) throws Throwable {
+	void callBefores(Object... args) {
 		ArrayList<GFMethod> applicables = getApplicableMethods(befores, args);
 
 		ArrayList<GFMethod> sorted = sort(applicables, true);
 		for (GFMethod gfm : sorted) {
-			getCall(gfm).invoke(gfm, args);
+			callMethod(getCall(gfm), gfm, args);
 		}
 	}
 
-	void callAfters(Object... args) throws Throwable {
+	void callAfters(Object... args) {
 		ArrayList<GFMethod> applicables = getApplicableMethods(afters, args);
 
 		ArrayList<GFMethod> sorted = sort(applicables, false);
 		for (GFMethod gfm : sorted) {
-			getCall(gfm).invoke(gfm, args);
+			callMethod(getCall(gfm), gfm, args);
 		}
+	}
+
+	Object callMethod(Method m, GFMethod gfm, Object... args) {
+		Object ret = null;
+		m.setAccessible(true);
+		try {
+			ret = m.invoke(gfm, args);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ret;
 	}
 
 	Method getCall(GFMethod gfm) {
