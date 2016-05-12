@@ -50,6 +50,8 @@ public class GenericFunction {
 		list.add(method);
 	}
 
+	// sorts a GFMethod list
+	// if specificFirst is true, the methods with the most specific arguments come first
 	public ArrayList<GFMethod> sort(ArrayList<GFMethod> applicables, boolean specificFirst) {
 		ArrayList<GFMethod> sorted = new ArrayList<GFMethod>();
 		for (GFMethod appGfm : applicables) {
@@ -113,7 +115,7 @@ public class GenericFunction {
 		return applicables;
 	}
 
-	public Object call(Object... args) {
+	public Object callEffective(Object... args) {
 		callBefores(args);
 		Object ret = callPrimary(args);
 		callAfters(args);
@@ -131,7 +133,6 @@ public class GenericFunction {
 		if (primary != null) {
 			Object ret = null;
 			ret = callMethod(primaryCall, primary, args);
-			//callAfters(args);
 			return ret;
 		}
 		return null;
@@ -171,7 +172,6 @@ public class GenericFunction {
 	}
 
 	void callBefores(Object... args) {
-		
 		ArrayList<GFMethod> applicables = getApplicableMethods(befores, args);
 
 		ArrayList<GFMethod> sorted = sort(applicables, true);
@@ -195,8 +195,9 @@ public class GenericFunction {
 		try {
 			ret = m.invoke(gfm, args);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.err.println("GFMethod needs a call method");
+			System.exit(-1);
 		}
 		return ret;
 	}
