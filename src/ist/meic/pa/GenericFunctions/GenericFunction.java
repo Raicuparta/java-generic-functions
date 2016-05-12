@@ -26,6 +26,17 @@ public class GenericFunction {
 		replace(afters, method);
 	}
 
+	public Object call(Object... args) {
+		ArrayList<GFMethod> effective = getEffective(args);
+		Object primaryRet = null;
+		for (GFMethod gfm : effective) {
+			Method m = getCall(gfm);
+			Object ret = callMethod(m, gfm, args);
+			if (ret != null) primaryRet = ret;
+		}
+		return primaryRet;
+	}
+
 	// checks if method with same arguments types already exists
 	// replaces if true, adds otherwise
 	public void replace(ArrayList<GFMethod> list, GFMethod method) {
@@ -51,7 +62,8 @@ public class GenericFunction {
 	}
 
 	// sorts a GFMethod list
-	// if specificFirst is true, the methods with the most specific arguments come first
+	// if specificFirst is true, the methods with the most specific arguments
+	// come first
 	public ArrayList<GFMethod> sort(ArrayList<GFMethod> applicables, boolean specificFirst) {
 		ArrayList<GFMethod> sorted = new ArrayList<GFMethod>();
 		for (GFMethod appGfm : applicables) {
@@ -115,25 +127,51 @@ public class GenericFunction {
 		return applicables;
 	}
 
-	public Object callEffective(Object... args) {
-		callBefores(args);
-		Object ret = callPrimary(args);
-		callAfters(args);
-		return ret;
+	public ArrayList<GFMethod> getEffective(Object... args) {
+		ArrayList<GFMethod> effective = getBefores(args);
+		effective.add(getPrimary(args));
+		effective.addAll(getAfters(args));
+
+		return effective;
 	}
 
-	public Object callPrimary(Object... args) {
+	public GFMethod getPrimary(Object... args) {
 		ArrayList<GFMethod> applicables = getApplicableMethods(primaries, args);
 		if (applicables.isEmpty())
 			throw new IllegalArgumentException("No methods for generic function " + name + " with args "
 					+ printArgs(args) + " of classes " + printArgTypes(args));
 		ArrayList<GFMethod> sorted = sort(applicables, true);
-		GFMethod primary = sorted.get(0);
-		Method primaryCall = getCall(primary);
-		if (primary != null) {
-			Object ret = null;
-			ret = callMethod(primaryCall, primary, args);
-			return ret;
+		return sorted.get(0);
+	}
+
+	public ArrayList<GFMethod> getBefores(Object... args) {
+		ArrayList<GFMethod> applicables = getApplicableMethods(befores, args);
+		return sort(applicables, true);
+	}
+
+	public ArrayList<GFMethod> getAfters(Object... args) {
+		ArrayList<GFMethod> applicables = getApplicableMethods(afters, args);
+		return sort(applicables, false);
+	}
+
+	Object callMethod(Method m, GFMethod gfm, Object... args) {
+		Object ret = null;
+		m.setAccessible(true);
+		try {
+			ret = m.invoke(gfm, args);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			e.printStackTrace();
+			System.err.println("GFMethod needs a call method");
+			System.exit(-1);
+		}
+		return ret;
+	}
+
+	Method getCall(GFMethod gfm) {
+		for (Method m : gfm.getClass().getDeclaredMethods()) {
+			if (m.getName() == "call") {
+				return m;
+			}
 		}
 		return null;
 	}
@@ -142,7 +180,8 @@ public class GenericFunction {
 		String result = "[";
 		for (Object arg : args) {
 			result += printObj(arg);
-			if (arg != args[args.length - 1]) result += " ";
+			if (arg != args[args.length - 1])
+				result += " ";
 		}
 		return result + "]";
 	}
@@ -169,45 +208,5 @@ public class GenericFunction {
 		}
 		result += "]\n";
 		return result;
-	}
-
-	void callBefores(Object... args) {
-		ArrayList<GFMethod> applicables = getApplicableMethods(befores, args);
-
-		ArrayList<GFMethod> sorted = sort(applicables, true);
-		for (GFMethod gfm : sorted) {
-			callMethod(getCall(gfm), gfm, args);
-		}
-	}
-
-	void callAfters(Object... args) {
-		ArrayList<GFMethod> applicables = getApplicableMethods(afters, args);
-
-		ArrayList<GFMethod> sorted = sort(applicables, false);
-		for (GFMethod gfm : sorted) {
-			callMethod(getCall(gfm), gfm, args);
-		}
-	}
-
-	Object callMethod(Method m, GFMethod gfm, Object... args) {
-		Object ret = null;
-		m.setAccessible(true);
-		try {
-			ret = m.invoke(gfm, args);
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			e.printStackTrace();
-			System.err.println("GFMethod needs a call method");
-			System.exit(-1);
-		}
-		return ret;
-	}
-
-	Method getCall(GFMethod gfm) {
-		for (Method m : gfm.getClass().getDeclaredMethods()) {
-			if (m.getName() == "call") {
-				return m;
-			}
-		}
-		return null;
 	}
 }
