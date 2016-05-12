@@ -83,8 +83,10 @@ public class GenericFunction {
 				for (int e = 0; e < sortedArgs.length; e++) {
 					Class<?> sortedType = sortedArgs[e];
 					Class<?> appType = appArgs[e];
-					if (!appType.isAssignableFrom(sortedType))
-						sortCondition = false;
+					if (appType != sortedType) {
+						sortCondition = appType.isAssignableFrom(sortedType);
+						break;
+					}
 				}
 
 				if (specificFirst)
