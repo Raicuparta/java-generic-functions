@@ -28,6 +28,16 @@ public class GenericFunction {
 	public void addAfterMethod(GFMethod method) {
 		replace(afters, method);
 	}
+	
+	public ArrayList<GFMethod> getFromCache(Object...args) {
+		String key = printArgTypes(args);
+		return cache.get(key);
+	}
+	
+	public void putOnCache(ArrayList<GFMethod> value, Object...args) {
+		String key = printArgTypes(args);
+		cache.put(key,  value);
+	}
 
 	public Object call(Object... args) {
 		ArrayList<GFMethod> effective = getEffective(args);
@@ -43,6 +53,9 @@ public class GenericFunction {
 	// checks if method with same arguments types already exists
 	// replaces if true, adds otherwise
 	public void replace(ArrayList<GFMethod> list, GFMethod method) {
+		//clear the cache when adding new methods to avoid bad entires
+		if (!cache.isEmpty()) cache.clear();
+		
 		Class<?>[] newTypes = getCall(method).getParameterTypes();
 
 		for (int e = 0; e < list.size(); e++) {
@@ -142,16 +155,6 @@ public class GenericFunction {
 		putOnCache(effective, args);
 
 		return effective;
-	}
-	
-	public ArrayList<GFMethod> getFromCache(Object...args) {
-		String key = printArgTypes(args);
-		return cache.get(key);
-	}
-	
-	public void putOnCache(ArrayList<GFMethod> value, Object...args) {
-		String key = printArgTypes(args);
-		cache.put(key,  value);
 	}
 
 	public GFMethod getPrimary(Object... args) {
