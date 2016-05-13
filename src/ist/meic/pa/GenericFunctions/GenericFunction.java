@@ -2,6 +2,7 @@ package ist.meic.pa.GenericFunctions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.lang.reflect.*;
 
 public class GenericFunction {
@@ -9,6 +10,8 @@ public class GenericFunction {
 	private ArrayList<GFMethod> befores = new ArrayList<GFMethod>();
 	private ArrayList<GFMethod> afters = new ArrayList<GFMethod>();
 	private ArrayList<GFMethod> primaries = new ArrayList<GFMethod>();
+	
+	private HashMap<String, ArrayList<GFMethod>> cache = new HashMap<String, ArrayList<GFMethod>>();
 
 	public GenericFunction(String name) {
 		this.name = name;
@@ -130,11 +133,25 @@ public class GenericFunction {
 	}
 
 	public ArrayList<GFMethod> getEffective(Object... args) {
-		ArrayList<GFMethod> effective = getBefores(args);
+		ArrayList<GFMethod> effective = getFromCache(args);
+		if (effective != null) return effective;
+		
+		effective = getBefores(args);
 		effective.add(getPrimary(args));
 		effective.addAll(getAfters(args));
+		putOnCache(effective, args);
 
 		return effective;
+	}
+	
+	public ArrayList<GFMethod> getFromCache(Object...args) {
+		String key = printArgTypes(args);
+		return cache.get(key);
+	}
+	
+	public void putOnCache(ArrayList<GFMethod> value, Object...args) {
+		String key = printArgTypes(args);
+		cache.put(key,  value);
 	}
 
 	public GFMethod getPrimary(Object... args) {
