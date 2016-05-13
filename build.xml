@@ -1,0 +1,21 @@
+<project name="GenericFunctions" default="compile" basedir="" >
+    <target name="init">
+		<mkdir dir="classes"/>
+    </target>
+    
+    <target name="clean">
+        <delete file="genericFunctions.jar"/>
+    </target>
+
+    <target name="compile" depends="clean, init">
+    	<javac srcdir="src" destdir="classes">
+    		<classpath>
+    			<pathelement path="."/>
+			</classpath>
+    	</javac>
+    	
+    	<jar destfile = "genericFunctions.jar"
+    	   basedir = "classes">
+    	</jar>
+    </target>
+</project>
